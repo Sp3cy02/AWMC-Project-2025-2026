@@ -1,0 +1,113 @@
+### Test Registrazione
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "nome": "Mario",
+  "cognome": "Rossi",
+  "email": "mario@prova.it",
+  "password": "123"
+}
+### Test Login (Deve funzionare: 200 OK)
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "mario@prova.it",
+  "password": "12"
+}
+
+### TEST PER I TEAM; REGISTRIAMO 2 utenti e proviamo a usare inviti e accetta
+
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "nome": "Mario",
+  "cognome": "Rossi",
+  "email": "mario@prova.it",
+  "password": "123"
+}
+
+### 2. Registra LUIGI (L'Amico)
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "nome": "Luigi",
+  "cognome": "Verdi",
+  "email": "luigi@prova.it",
+  "password": "123"
+}
+
+### 3. MARIO crea il Team Rocket
+POST http://localhost:8080/api/teams/create
+Content-Type: application/json
+
+{
+  "nomeTeam": "Team Rocket",
+  "creatorUserId": 1
+}
+
+### 4. MARIO invita Luigi (usando la mail)
+POST http://localhost:8080/api/teams/invite
+Content-Type: application/json
+
+{
+  "teamId": 1,
+  "emailUtente": "luigi@prova.it"
+}
+
+### 5. LUIGI accetta l'invito
+POST http://localhost:8080/api/teams/respond-invite
+Content-Type: application/json
+
+{
+  "teamId": 1,
+  "userId": 2,
+  "accetta": true
+}
+
+### TEST CREAZIONE HACKATHON
+### TEST CREAZIONE HACKATHON
+### 1. Registra l'ORGANIZZATORE (Mario)
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "nome": "Mario", "cognome": "Rossi", "email": "org@hackhub.com", "password": "123"
+}
+
+### 2. Registra il GIUDICE (Luigi)
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "nome": "Luigi", "cognome": "Verdi", "email": "judge@hackhub.com", "password": "123"
+}
+
+### 3. Registra il MENTORE (Peach)
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "nome": "Peach", "cognome": "Toadstool", "email": "mentor@hackhub.com", "password": "123"
+}
+
+### 4. CREA L'HACKATHON (Finalmente!)
+POST http://localhost:8080/api/hackathons/create
+Content-Type: application/json
+
+{
+  "organizerId": 1,
+  "judgeId": 2,
+  "mentorIds": [3],
+  "nome": "HackHub 2025",
+  "regolamento": "Vietato copiare codice da StackOverflow senza capire come funziona.",
+  "luogo": "Politecnico di Milano (Aula Magna)",
+  "premio": 5000.00,
+  "dimensioneMassimaTeam": 5,
+  "dataInizio": "2025-10-10T09:00:00",
+  "dataFine": "2025-10-12T18:00:00",
+  "scadenzaIscrizione": "2025-10-01T23:59:00"
+}

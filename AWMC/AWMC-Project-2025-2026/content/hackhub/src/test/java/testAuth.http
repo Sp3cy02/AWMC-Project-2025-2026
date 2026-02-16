@@ -1,0 +1,94 @@
+### ==============================================
+### VARIABILI GLOBALI (Sostituisci i valori dopo la registrazione!)
+### ==============================================
+# Qui incollerai i token lunghissimi (senza virgolette) che riceverai ai punti 1 e 2
+@tokenCapitano = incolla_qui_il_token_di_steve_dopo_il_punto_1
+@tokenRecluta = incolla_qui_il_token_di_peter_dopo_il_punto_2
+
+### ==============================================
+### 1. Registra l'utente CAPITANO
+### ==============================================
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "nome": "Steve",
+  "cognome": "Rogers",
+  "email": "capitano@test.it",
+  "password": "123"
+}
+# 🛑 FERMATI QUI! 
+# Prendi il valore "token" dalla risposta e incollalo sopra in @tokenCapitano
+
+
+### ==============================================
+### 2. Registra l'utente RECLUTA
+### ==============================================
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "nome": "Peter",
+  "cognome": "Parker",
+  "email": "recluta@test.it",
+  "password": "123"
+}
+# 🛑 FERMATI QUI! 
+# Prendi il valore "token" dalla risposta e incollalo sopra in @tokenRecluta
+
+
+### ==============================================
+### 3. Il Capitano crea il Team "Avengers"
+### ==============================================
+# 🛡️ SICUREZZA: Aggiungiamo il token del Capitano
+POST http://localhost:8080/api/teams/create
+Content-Type: application/json
+Authorization: Bearer {{tokenCapitano}}
+
+{
+  "nomeTeam": "Avengers",
+  "creatorUserId": 1
+}
+
+
+### ==============================================
+### 4. Il Capitano invita la Recluta
+### ==============================================
+# 🛡️ SICUREZZA: L'invito lo manda il Capitano, quindi usiamo il suo token
+POST http://localhost:8080/api/teams/invite
+Content-Type: application/json
+Authorization: Bearer {{tokenCapitano}}
+
+{
+  "teamId": 1,
+  "emailUtente": "recluta@test.it"
+}
+
+
+### ==============================================
+### 5. La Recluta ACCETTA l'invito
+### ==============================================
+# 🛡️ SICUREZZA: L'accettazione la fa la Recluta! Qui usiamo @tokenRecluta
+POST http://localhost:8080/api/teams/respond-invite
+Content-Type: application/json
+Authorization: Bearer {{tokenRecluta}}
+
+{
+  "teamId": 1,
+  "userId": 2,
+  "accetta": true
+}
+
+
+### ==============================================
+### 6. Verifica (Opzionale)
+### ==============================================
+# 🛡️ SICUREZZA: Il Capitano riprova a inviare (deve fallire con errore di logica)
+POST http://localhost:8080/api/teams/invite
+Content-Type: application/json
+Authorization: Bearer {{tokenCapitano}}
+
+{
+  "teamId": 1,
+  "emailUtente": "recluta@test.it"
+}
