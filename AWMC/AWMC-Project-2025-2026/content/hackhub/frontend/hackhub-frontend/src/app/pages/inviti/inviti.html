@@ -1,0 +1,42 @@
+<div class="page">
+  <header class="topbar">
+    <div class="brand" (click)="goHome()">HackHub</div>
+    <div class="actions">
+      <button class="btn ghost" (click)="goHome()">← Home</button>
+      <button class="btn" (click)="reload()" [disabled]="loading">
+        {{ loading ? 'Carico...' : 'Ricarica' }}
+      </button>
+    </div>
+  </header>
+
+  <div class="alert error" *ngIf="err">{{ err }}</div>
+  <div class="alert ok" *ngIf="msg">{{ msg }}</div>
+
+  <div class="card">
+    <h2 class="title">Inviti</h2>
+    <p class="muted">Lista inviti PENDING (backend: <code>/api/teams/invitations/by-user</code>).</p>
+
+    <div class="muted" *ngIf="loading">Caricamento inviti...</div>
+
+    <div class="muted" *ngIf="!loading && invites.length === 0">
+      Nessun invito in attesa.
+    </div>
+
+    <div class="list" *ngIf="invites.length > 0">
+      <div class="item" *ngFor="let inv of invites">
+        <div class="left">
+          <div class="name">{{ label(inv) }}</div>
+          <div class="meta">
+            <span class="pill">Status: {{ inv.status }}</span>
+            <span class="muted">Invito ID: {{ inv.invitationId }}</span>
+          </div>
+        </div>
+
+        <div class="row">
+          <button class="btn" (click)="respond(inv, true)" [disabled]="loading">Accetta</button>
+          <button class="btn ghost" (click)="respond(inv, false)" [disabled]="loading">Rifiuta</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

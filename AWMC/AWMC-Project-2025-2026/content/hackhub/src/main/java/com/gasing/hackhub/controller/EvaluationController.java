@@ -14,7 +14,7 @@ public class EvaluationController {
     @Autowired
     private EvaluationService evaluationService;
 
-    // CREA UNA VALUTAZIONE
+    // Crea una valutazione
     @PostMapping("/create")
     public ResponseEntity<?> createEvaluation(@RequestBody CreateEvaluationRequest request) {
         try {

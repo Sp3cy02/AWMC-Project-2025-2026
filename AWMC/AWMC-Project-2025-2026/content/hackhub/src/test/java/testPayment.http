@@ -1,0 +1,131 @@
+### ===================================================================
+### CASO D'USO 5: CONCLUSIONE, VINCITORE E PAGAMENTO
+### ===================================================================
+
+### 1. SETUP RAPIDO (Attori, Evento, Team, Iscrizione)
+### ---------------------------------------------------
+### Creo Organizzatore (ID: 1)
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{ "nome": "Nick", "cognome": "Fury", "email": "org@test.com", "password": "123" }
+
+###
+
+### Creo Giudice (ID: 2)
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{ "nome": "Matt", "cognome": "Murdock", "email": "judge@test.com", "password": "123" }
+
+###
+
+### Creo Mentore (ID: 3)
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{ "nome": "Tony", "cognome": "Stark", "email": "mentor@test.com", "password": "123" }
+
+###
+
+### Creo Team Leader (ID: 4)
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{ "nome": "Peter", "cognome": "Parker", "email": "spidey@test.com", "password": "123" }
+
+###
+
+### Creo Hackathon (ID: 1)
+POST http://localhost:8080/api/hackathons/create
+Content-Type: application/json
+
+{
+  "organizerId": 1,
+  "judgeId": 2,
+  "mentorIds": [3],
+  "nome": "Endgame Hackathon",
+  "regolamento": "Win or die.",
+  "luogo": "Space",
+  "premio": 1000.0,
+  "dimensioneMassimaTeam": 5,
+  "dataInizio": "2026-06-01T09:00:00",
+  "dataFine": "2026-06-03T18:00:00",
+  "scadenzaIscrizione": "2026-05-30T23:59:00"
+}
+
+###
+
+### Creo Team (ID: 1)
+POST http://localhost:8080/api/teams/create
+Content-Type: application/json
+
+{ "nomeTeam": "Avengers", "creatorUserId": 4 }
+
+###
+
+### Iscrizione
+POST http://localhost:8080/api/registrations/join
+Content-Type: application/json
+
+{ "hackathonId": 1, "teamId": 1, "userId": 4 }
+
+###
+
+### 2. SVOLGIMENTO (Avanzamento Fasi)
+### ---------------------------------------------------
+
+### Start Evento (Open -> Ongoing)
+POST http://localhost:8080/api/hackathons/1/next-phase?organizerId=1
+### ATTESO: 200 OK - "ONGOING"
+
+###
+
+### Invio Progetto (Submission)
+POST http://localhost:8080/api/submissions/submit
+Content-Type: application/json
+
+{
+  "hackathonId": 1,
+  "teamId": 1,
+  "userId": 4,
+  "repositoryLink": "github.com/avengers/snap",
+  "descrizione": "Progetto che schiocca le dita."
+}
+
+###
+
+### Stop Coding (Ongoing -> Evaluation)
+POST http://localhost:8080/api/hackathons/1/next-phase?organizerId=1
+### ATTESO: 200 OK - "EVALUATION"
+
+###
+
+### 3. VALUTAZIONE (Il Giudice vota)
+### ---------------------------------------------------
+### Nota: ID Submission sarà 1
+POST http://localhost:8080/api/evaluations/create
+Content-Type: application/json
+
+{
+  "submissionId": 1,
+  "judgeId": 2,
+  "score": 10,
+  "comment": "Eccellente lavoro."
+}
+
+###
+
+### 4. PROCLAMAZIONE VINCITORE (Chiusura Evento)
+### ---------------------------------------------------
+### L'Organizzatore chiude l'evento. Il vincitore viene calcolato nel DB.
+POST http://localhost:8080/api/hackathons/1/next-phase?organizerId=1
+### ATTESO: 200 OK - "CONCLUDED" (ma niente log di pagamento qui)
+
+###
+
+### 5. EROGAZIONE PREMIO (Azione Separata - Pattern Adapter)
+### ---------------------------------------------------
+### L'Organizzatore decide di pagare.
+POST http://localhost:8080/api/hackathons/1/pay-prize?organizerId=1
+### ATTESO: 200 OK - "Pagamento di €1000.0 al team 'Avengers' avviato..."

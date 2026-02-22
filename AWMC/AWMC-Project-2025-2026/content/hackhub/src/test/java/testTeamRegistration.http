@@ -1,0 +1,190 @@
+### ===================================================================
+### CASO D'USO 3: GESTIONE TEAM E ISCRIZIONE
+### ===================================================================
+
+### 1. SETUP: CREAZIONE UTENTI
+### ---------------------------------------------------
+
+### 1.1 Crea Organizzatore (ID: 1)
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "nome": "Nick",
+  "cognome": "Fury",
+  "email": "org@shield.com",
+  "password": "123"
+}
+
+###
+
+### 1.2 Crea Giudice (ID: 2)
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "nome": "Matt",
+  "cognome": "Murdock",
+  "email": "judge@law.com",
+  "password": "123"
+}
+
+###
+
+### 1.3 Crea Mentore (ID: 3)
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "nome": "Tony",
+  "cognome": "Stark",
+  "email": "mentor@stark.com",
+  "password": "123"
+}
+
+###
+
+### 1.4 Crea Team Leader - ALICE (ID: 4)
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "nome": "Alice",
+  "cognome": "Wonder",
+  "email": "alice@wonderland.com",
+  "password": "123"
+}
+
+###
+
+### 1.5 Crea Membro da Invitare - BOB (ID: 5)
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "nome": "Bob",
+  "cognome": "Builder",
+  "email": "bob@builder.com",
+  "password": "123"
+}
+
+###
+
+### 1.6 Crea Estraneo - EVE (ID: 6)
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "nome": "Eve",
+  "cognome": "Hacker",
+  "email": "eve@evil.com",
+  "password": "123"
+}
+
+###
+
+### 2. SETUP: CREAZIONE HACKATHON
+### ---------------------------------------------------
+
+### 2.1 Crea Hackathon Valido (ID: 1)
+POST http://localhost:8080/api/hackathons/create
+Content-Type: application/json
+
+{
+  "organizerId": 1,
+  "judgeId": 2,
+  "mentorIds": [3],
+  "nome": "Code Fest 2026",
+  "regolamento": "Codice pulito e divertimento.",
+  "luogo": "Online",
+  "premio": 5000.0,
+  "dimensioneMassimaTeam": 4,
+  "dataInizio": "2026-09-01T09:00:00",
+  "dataFine": "2026-09-03T18:00:00",
+  "scadenzaIscrizione": "2026-08-30T23:59:00"
+}
+
+###
+
+### 3. GESTIONE TEAM (INVITI E ADESIONI)
+### ---------------------------------------------------
+
+### 3.1 Alice crea il Team (ID: 1)
+POST http://localhost:8080/api/teams/create
+Content-Type: application/json
+
+{
+  "nomeTeam": "Wonder Team",
+  "creatorUserId": 4
+}
+### ATTESO: 200 OK - Restituisce il Team creato
+
+###
+
+### 3.2 Alice invita Bob nel team
+POST http://localhost:8080/api/teams/invite
+Content-Type: application/json
+
+{
+  "teamId": 1,
+  "emailUtente": "bob@builder.com"
+}
+### ATTESO: 200 OK - "Invito inviato con successo!"
+
+###
+
+### 3.3 Bob ACCETTA l'invito
+POST http://localhost:8080/api/teams/respond-invite
+Content-Type: application/json
+
+{
+  "teamId": 1,
+  "userId": 5,
+  "accetta": true
+}
+### ATTESO: 200 OK - "Benvenuto nel team!"
+
+###
+
+### 4. ISCRIZIONE ALL'EVENTO
+### ---------------------------------------------------
+
+### 4.1 TEST SUCCESSO: Iscrizione Team
+### Alice (Leader) iscrive il team all'Hackathon
+POST http://localhost:8080/api/registrations/join
+Content-Type: application/json
+
+{
+  "hackathonId": 1,
+  "teamId": 1,
+  "userId": 4
+}
+### ATTESO: 200 OK - "Iscrizione effettuata con successo!"
+
+###
+
+### 4.2 TEST FALLIMENTO: Iscrizione Duplicata
+### Alice prova a iscrivere di nuovo lo stesso team
+POST http://localhost:8080/api/registrations/join
+Content-Type: application/json
+
+{
+  "hackathonId": 1,
+  "teamId": 1,
+  "userId": 4
+}
+### ATTESO: 400 Bad Request - "Il team è già iscritto..."
+
+###
+
+### 4.3 TEST FALLIMENTO: Estraneo prova a iscrivere il team
+### Eve (ID 6) prova a iscrivere il team di Alice (ID 1)
+POST http://localhost:8080/api/registrations/join
+Content-Type: application/json
+
+{
+  "hackathonId": 1,
+  "teamId": 1,
+  "userId": 6
+}
+### ATTESO: 400 Bad Request - "...non fa parte del team..."

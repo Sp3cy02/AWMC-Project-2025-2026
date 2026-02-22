@@ -1,7 +1,7 @@
 package com.gasing.hackhub.enums;
 
 public enum HackathonStatus {
-    REGISTRATION_OPEN,
+    REGISTRATION,
     ONGOING,
     EVALUATION,
     CONCLUDED

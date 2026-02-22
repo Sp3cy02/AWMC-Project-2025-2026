@@ -21,14 +21,14 @@ public class StaffAssignment {
     @Column(nullable = false)
     private Role role;
 
-    // --- RELAZIONE CON USER ---
+    // Relazione con User
     @ManyToOne(optional = false) // optional=false: Non può esistere un incarico senza una persona fisica
     @JoinColumn(name = "user_id", nullable = false)
     @ToString.Exclude  // evita il loop di stampa con User
     @JsonIgnore        // evita il loop JSON
     private User user;
 
-    // --- RELAZIONE CON HACKATHON ---
+    // Relazione con Hackathon
     @ManyToOne(optional = false) // optional=false: Non può esistere un incarico senza un evento
     @JoinColumn(name = "hackathon_id", nullable = false)
     @ToString.Exclude  // evita il loop di stampa con Hackathon

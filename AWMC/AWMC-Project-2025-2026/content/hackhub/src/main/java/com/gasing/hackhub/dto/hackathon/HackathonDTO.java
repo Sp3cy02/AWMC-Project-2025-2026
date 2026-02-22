@@ -13,7 +13,7 @@ public class HackathonDTO {
 
     // Dati dell'evento
     private String nome;
-    private String regolamento; // Testo lungo
+    private String regolamento;
     private String luogo;
     private Double premio;
     private int dimensioneMassimaTeam;

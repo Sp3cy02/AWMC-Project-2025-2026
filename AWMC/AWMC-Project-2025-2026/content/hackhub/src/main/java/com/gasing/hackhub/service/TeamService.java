@@ -3,121 +3,115 @@ package com.gasing.hackhub.service;
 import com.gasing.hackhub.dto.team.request.CreateTeamRequest;
 import com.gasing.hackhub.dto.team.request.InviteMemberRequest;
 import com.gasing.hackhub.dto.team.response.InviteMemberResponse;
+import com.gasing.hackhub.dto.team.response.PendingInviteDTO;
+import com.gasing.hackhub.dto.team.response.TeamMemberDTO;
 import com.gasing.hackhub.enums.InviteStatus;
 import com.gasing.hackhub.model.Team;
 import com.gasing.hackhub.model.TeamInvitation;
 import com.gasing.hackhub.model.User;
+import com.gasing.hackhub.repository.TeamInvitationRepository;
 import com.gasing.hackhub.repository.TeamRepository;
 import com.gasing.hackhub.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
+import java.util.List;
 
-// service dice a spring che qui dentro c'è la logica del programma
-// in pratica è il cervello che fa i calcoli prima di salvare nel db
 @Service
 public class TeamService {
 
-    // autowired serve a farci dare da spring i repository già pronti
-    // senza dover fare new repository ogni volta ci pensa lui
     @Autowired
     private TeamRepository teamRepository;
 
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private TeamInvitationRepository teamInvitationRepository;
 
-    // transactional serve se qualcosa va storto a metà del metodo
-    // lui annulla tutto in automatico così non restano dati a metà nel db
+    // -----------------------------
+    // CREA TEAM
+    // -----------------------------
     @Transactional
     public Team createTeam(CreateTeamRequest request) {
-        // prima controllo se esiste quello che vuole creare il team
         User creator = userRepository.findById(request.getCreatorUserId())
                 .orElseThrow(() -> new RuntimeException("Utente creatore non trovato"));
 
-        // poi vedo se sta già in un altro team perchè non può starne in due
         if (creator.getTeam() != null) {
             throw new RuntimeException("L'utente fa già parte di un team!");
         }
 
-        // controllo pure se il nome del team è già preso
+        // attenzione: nel tuo progetto prima usavi existsByNome(...)
+        // qui assumo che TeamRepository abbia existsByNome(String nome)
         if (teamRepository.existsByNome(request.getNomeTeam())) {
             throw new RuntimeException("Esiste già un team con questo nome!");
         }
 
-        // se è tutto ok creo il team nuovo
         Team newTeam = new Team();
         newTeam.setNome(request.getNomeTeam());
 
-        // salvo il team così il db gli da un id
         newTeam = teamRepository.save(newTeam);
 
-        // Aggiungo manualmente l'utente alla lista del team in memoria
-        // così quando restituisco l'oggetto 'newTeam' al frontend, la lista non è vuota.
+        // aggiungo il creatore ai membri
         newTeam.getMembers().add(creator);
-
-        // e infine dico all'utente che questo è il suo nuovo team e salvo l'utente
         creator.setTeam(newTeam);
         userRepository.save(creator);
-
 
         return newTeam;
     }
 
+    // -----------------------------
+    // INVITA MEMBRO (via email)
+    // POST /api/teams/invite
+    // -----------------------------
     @Transactional
     public void inviteMember(InviteMemberRequest request) {
-        // recupero il team che sta mandando l'invito
         Team team = teamRepository.findById(request.getTeamId())
                 .orElseThrow(() -> new RuntimeException("Team non trovato"));
 
-        // cerco l'amico da invitare usando la mail
         User destinatario = userRepository.findByEmail(request.getEmailUtente())
                 .orElseThrow(() -> new RuntimeException("Nessun utente trovato con questa email"));
 
-        // se l'amico ha già un team non possiamo invitarlo quindi blocco tutto
         if (destinatario.getTeam() != null) {
             throw new RuntimeException("L'utente fa già parte di un altro team!");
         }
 
-        // qui controllo se per caso non l'abbiamo già invitato ed è ancora in attesa
-        // uso stream che è un modo veloce per filtrare la lista degli inviti senza fare cicli for
+        // evita invito doppio PENDING
         boolean invitoGiaEsistente = team.getInviti().stream()
-                .anyMatch(invito -> invito.getReceiver().getId().equals(destinatario.getId())
-                        && invito.getStatus() == InviteStatus.PENDING);
+                .anyMatch(invito ->
+                        invito.getReceiver().getId().equals(destinatario.getId())
+                                && invito.getStatus() == InviteStatus.PENDING
+                );
 
         if (invitoGiaEsistente) {
             throw new RuntimeException("Hai già invitato questo utente ed è in attesa!");
         }
 
-        // creo l'oggetto invito e ci metto dentro chi invia e chi riceve
         TeamInvitation invitation = new TeamInvitation();
         invitation.setTeam(team);
         invitation.setReceiver(destinatario);
-        invitation.setStatus(InviteStatus.PENDING); // lo stato iniziale è in attesa
+        invitation.setStatus(InviteStatus.PENDING);
 
-        // aggiungo l'invito alla lista del team e salvo il team
-        // grazie a una cosa che si chiama cascade spring salva da solo anche l'invito
+        // aggiungo all’elenco inviti del team
         team.getInviti().add(invitation);
 
+        // salvo (così scatta insert su team_invitation)
         teamRepository.save(team);
     }
 
-    // --- 3. RISPONDERE ALL'INVITO ---
-
+    // -----------------------------
+    // RISPONDI INVITO (accetta/rifiuta)
+    // POST /api/teams/respond-invite
+    // -----------------------------
     @Transactional
     public void rispondiInvito(InviteMemberResponse request) {
-
-        // recupero team e utente dal database
         Team team = teamRepository.findById(request.getTeamId())
                 .orElseThrow(() -> new RuntimeException("Team non trovato"));
 
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new RuntimeException("Utente non trovato"));
 
-        // qui devo trovare l'invito giusto dentro la lista del team
-        // cerco quello indirizzato a me che è ancora in stato pending
         TeamInvitation invito = team.getInviti().stream()
                 .filter(i -> i.getReceiver().getId().equals(user.getId())
                         && i.getStatus() == InviteStatus.PENDING)
@@ -125,18 +119,53 @@ public class TeamService {
                 .orElseThrow(() -> new RuntimeException("Nessun invito in attesa trovato per te!"));
 
         if (request.isAccetta()) {
-            // se ha detto si cambio lo stato in accepted
-            invito.setStatus(InviteStatus.ACCEPTED);
+            if (user.getTeam() != null) {
+                throw new RuntimeException("Fai già parte di un team! Devi uscire prima di accettare un nuovo invito.");
+            }
 
-            // e aggiorno l'utente mettendogli il team
+            invito.setStatus(InviteStatus.ACCEPTED);
             user.setTeam(team);
             userRepository.save(user);
         } else {
-            // se ha detto no metto rejected e basta
             invito.setStatus(InviteStatus.REJECTED);
         }
 
-        // alla fine salvo il team così si aggiorna lo stato dell'invito
         teamRepository.save(team);
+    }
+
+    // -----------------------------
+    // LISTA MEMBRI TEAM (DTO pulito)
+    // GET /api/teams/{teamId}/members
+    // -----------------------------
+    @Transactional(readOnly = true)
+    public List<TeamMemberDTO> getMembersDTO(Long teamId) {
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new RuntimeException("Team non trovato"));
+
+        return team.getMembers().stream()
+                .map(u -> new TeamMemberDTO(u.getId(), u.getNome(), u.getCognome(), u.getEmail()))
+                .toList();
+    }
+
+    // -----------------------------
+    // LISTA INVITI PENDING DI UN UTENTE (DTO pulito)
+    // GET /api/teams/invitations/by-user?userId=...
+    // -----------------------------
+    @Transactional(readOnly = true)
+    public List<PendingInviteDTO> getPendingInvitesForUser(Long userId) {
+        userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Utente non trovato"));
+
+        List<TeamInvitation> invites =
+                teamInvitationRepository.findByReceiver_IdAndStatus(userId, InviteStatus.PENDING);
+
+        return invites.stream()
+                .map(i -> new PendingInviteDTO(
+                        i.getId(),
+                        i.getTeam().getId(),
+                        i.getTeam().getNome(),
+                        i.getStatus()
+                ))
+                .toList();
     }
 }

@@ -12,4 +12,5 @@ public class TeamContext {
     private Hackathon hackathon;
     private Team team;
     private User user;
+
 }

@@ -1,0 +1,155 @@
+### ===================================================================
+### CASO D'USO: GESTIONE VIOLAZIONI (MENTORE -> ORGANIZZATORE)
+### ===================================================================
+
+### 1. SETUP: CREAZIONE ATTORI
+### ---------------------------------------------------
+
+### 1.1 Crea Organizzatore (Nick) - ID: 1
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "nome": "Nick",
+  "cognome": "Fury",
+  "email": "director@shield.com",
+  "password": "123"
+}
+
+###
+
+### 1.2 Crea Mentore (Tony) - ID: 2
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "nome": "Tony",
+  "cognome": "Stark",
+  "email": "ironman@stark.com",
+  "password": "123"
+}
+
+###
+
+### 1.3 Crea Team Leader "Cattivo" (Loki) - ID: 3
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "nome": "Loki",
+  "cognome": "Laufeyson",
+  "email": "loki@asgard.com",
+  "password": "123"
+}
+
+###
+
+### 1.4 Crea un Giudice (Strange) - ID: 4
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "nome": "Stephen",
+  "cognome": "Strange",
+  "email": "dr@strange.com",
+  "password": "123"
+}
+
+###
+
+### 2. SETUP: EVENTO E TEAM
+### ---------------------------------------------------
+
+### 2.1 Crea Hackathon (ID: 1)
+### Staff: Nick(Org), Tony(Mentor), Strange(Judge)
+POST http://localhost:8080/api/hackathons/create
+Content-Type: application/json
+
+{
+  "organizerId": 1,
+  "judgeId": 4,
+  "mentorIds": [2],
+  "nome": "Infinity War",
+  "regolamento": "Nessuna gemma dell'infinito ammessa.",
+  "luogo": "Wakanda",
+  "premio": 100.0,
+  "dimensioneMassimaTeam": 3,
+  "dataInizio": "2026-06-01T09:00:00",
+  "dataFine": "2026-06-03T18:00:00",
+  "scadenzaIscrizione": "2026-05-30T23:59:00"
+}
+
+###
+
+### 2.2 Crea Team "Hydra" (ID: 1)
+POST http://localhost:8080/api/teams/create
+Content-Type: application/json
+
+{
+  "nomeTeam": "Hydra",
+  "creatorUserId": 3
+}
+
+###
+
+### 2.3 Iscrizione Team all'Hackathon
+POST http://localhost:8080/api/registrations/join
+Content-Type: application/json
+
+{
+  "hackathonId": 1,
+  "teamId": 1,
+  "userId": 3
+}
+
+###
+
+### 3. FASE DI SEGNALAZIONE (IL MENTORE)
+### ---------------------------------------------------
+
+### 3.1 TEST FALLIMENTO: Segnalazione da Utente Non Autorizzato
+### Il Giudice (ID 4) prova a segnalare, ma solo i Mentori possono.
+POST http://localhost:8080/api/violations/report
+Content-Type: application/json
+
+{
+  "reporterId": 4,
+  "hackathonId": 1,
+  "teamId": 1,
+  "motivo": "Non mi piacciono."
+}
+### ATTESO: 400 Bad Request - "Solo i Mentori possono segnalare..."
+
+###
+
+### 3.2 TEST SUCCESSO: Il Mentore Segnala
+### Tony (ID 2) segnala il team Hydra per violazione regolamento.
+POST http://localhost:8080/api/violations/report
+Content-Type: application/json
+
+{
+  "reporterId": 2,
+  "hackathonId": 1,
+  "teamId": 1,
+  "motivo": "Hanno usato il Tesseract per finire il codice prima."
+}
+### ATTESO: 200 OK - "Segnalazione inviata con successo! ID: 1"
+
+###
+
+### 4. FASE DI DECISIONE (L'ORGANIZZATORE)
+### ---------------------------------------------------
+
+### 4.1 TEST FALLIMENTO: Decisione da Utente Sbagliato
+### Il Mentore prova a squalificare da solo il team.
+POST http://localhost:8080/api/violations/1/decide?organizerId=2&confirm=true
+Content-Type: application/json
+### ATTESO: 400 Bad Request - "Solo l'Organizzatore può..."
+
+###
+
+### 4.2 TEST SUCCESSO: Squalifica del Team
+### Nick Fury (ID 1) conferma la violazione e squalifica il team.
+POST http://localhost:8080/api/violations/1/decide?organizerId=1&confirm=true
+Content-Type: application/json
+### ATTESO: 200 OK - "Violazione CONFERMATA. Team Squalificato."

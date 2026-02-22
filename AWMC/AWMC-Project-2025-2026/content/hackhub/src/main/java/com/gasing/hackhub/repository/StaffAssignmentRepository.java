@@ -17,11 +17,11 @@ public interface StaffAssignmentRepository extends JpaRepository<StaffAssignment
     // Restituisce tutti i ruoli di un utente in vari hackathon
     List<StaffAssignment> findByUserId(Long userId);
 
-    // Restituisce lo staff con un ruolo specifico in un evento
-    List<StaffAssignment> findByHackathonIdAndRole(Long hackathonId, Role role);
-
     // Controlla se un utente è già assegnato come staff in un hackathon specifico
     boolean existsByHackathonIdAndUserId(Long hackathonId, Long userId);
 
     Optional<StaffAssignment> findByHackathonIdAndUserId(Long hackathonId, Long userId);
+
+    boolean existsByHackathonIdAndUserIdAndRole(Long hackathonId, Long userId, Role role);
+
 }

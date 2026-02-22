@@ -17,7 +17,7 @@ public class Submission {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Link al repository (GitHub/GitLab) - Obbligatorio
+    // Link al repository
     @Column(nullable = false)
     private String repositoryLink;
 
@@ -29,6 +29,8 @@ public class Submission {
     // Data e ora esatta della consegna (importante per vedere se hanno consegnato in ritardo!)
     @Column(nullable = false)
     private LocalDateTime dataInvio;
+
+    // Relazioni
 
     @OneToOne(optional = false) // una submission appartiene a una specifica iscrizione del team all'hackathon
     @JoinColumn(name = "registration_id", nullable = false, unique = true)

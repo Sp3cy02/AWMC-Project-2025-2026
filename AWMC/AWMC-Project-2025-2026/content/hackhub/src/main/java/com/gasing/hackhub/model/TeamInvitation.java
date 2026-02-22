@@ -19,7 +19,9 @@ public class TeamInvitation {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private InviteStatus status; // PENDING, ACCEPTED, REJECTED
+    private InviteStatus status;
+
+    // Relazioni
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)

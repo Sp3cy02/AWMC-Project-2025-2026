@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class SubmissionService {
@@ -22,6 +23,9 @@ public class SubmissionService {
 
     @Autowired
     private ValidatorService validatorService;
+
+    @Autowired
+    private StaffAssignmentRepository staffAssignmentRepository;
 
     @Transactional
     public Submission submitProject(SubmitProjectRequest request) {
@@ -41,14 +45,12 @@ public class SubmissionService {
             throw new RuntimeException("Non puoi inviare progetti ora! L'Hackathon è in fase: " + hackathon.getStato());
         }
 
-        // RECUPERO LA REGISTRAZIONE
-        // Qui usiamo il metodo che ti ho fatto aggiungere poco fa
+        // Recupero la registrazione
         HackathonRegistration registration = registrationRepository.findByHackathonAndTeam(hackathon, team)
                 .orElseThrow(() -> new RuntimeException("Errore: Il team non risulta iscritto a questo hackathon!"));
 
 
-        // CONTROLLO SCADENZA
-        // Se adesso (now) è dopo la fine dell'evento -> Errore
+        // Controllo la scadenza
         if (LocalDateTime.now().isAfter(hackathon.getDataFine())) {
             throw new RuntimeException("Tempo scaduto! L'hackathon è concluso, non puoi più inviare progetti.");
         }
@@ -59,7 +61,7 @@ public class SubmissionService {
                 .orElse(null); // Se non c'è, torna null
 
         if (submission == null) {
-            // PRIMA VOLTA -> Creo un oggetto nuovo
+            // Se è la prima volta creo un oggetto nuovo
             submission = new Submission();
             submission.setRegistration(registration);
         } else {
@@ -80,4 +82,13 @@ public class SubmissionService {
             // Salvo nel DB
             return submissionRepository.save(submission);
         }
+
+    public List<Submission> getSubmissionsByHackathon(Long hackathonId, Long userId) {
+
+        // Cerco se l'utente ha un ruolo in questo hackathon
+        validatorService.requireStaffMembership(hackathonId, userId);
+
+        // Recupero la lista dal Repository
+        return submissionRepository.findByRegistration_Hackathon_Id(hackathonId);
+    }
 }

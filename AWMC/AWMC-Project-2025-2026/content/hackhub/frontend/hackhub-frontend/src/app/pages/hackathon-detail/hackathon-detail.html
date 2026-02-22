@@ -1,0 +1,94 @@
+<div class="page">
+
+  <header class="topbar">
+    <div class="brand" (click)="goHome()">HackHub</div>
+    <div class="actions">
+      <button class="btn ghost" (click)="goHome()">← Indietro</button>
+      <button class="btn" (click)="reload()" [disabled]="loading">
+        {{ loading ? 'Carico...' : 'Ricarica' }}
+      </button>
+    </div>
+  </header>
+
+  <div class="alert error" *ngIf="error">{{ error }}</div>
+
+  <div class="card" *ngIf="!hackathon && loading">Caricamento...</div>
+
+  <section class="grid" *ngIf="hackathon">
+
+    <!-- Info -->
+    <div class="card">
+      <h2 class="title">{{ hackathon.nome }}</h2>
+      <div class="meta">
+        <span class="pill">{{ hackathon.stato }}</span>
+        <span class="muted">ID: {{ hackathon.id }}</span>
+      </div>
+
+      <div class="kv">
+        <div><span class="k">Luogo</span><span class="v">{{ hackathon.luogo || '—' }}</span></div>
+        <div><span class="k">Premio</span><span class="v">{{ formatEuro(hackathon.premio) }}</span></div>
+        <div><span class="k">Membri massimi per team</span><span class="v">{{ hackathon.dimensioneMassimaTeam }}</span></div>
+        <div><span class="k">Inizio</span><span class="v">{{ formatDateTime(hackathon.dataInizio) }}</span></div>
+        <div><span class="k">Fine</span><span class="v">{{ formatDateTime(hackathon.dataFine) }}</span></div>
+        <div><span class="k">Scadenza iscrizione</span><span class="v">{{ formatDateTime(hackathon.scadenzaIscrizione) }}</span></div>
+      </div>
+
+      <div class="divider"></div>
+
+      <h3 class="subtitle">Team iscritti</h3>
+      <p class="muted">Backend: <code>/api/registrations/hackathon/:hackathonId/teams</code></p>
+
+      <div class="muted" *ngIf="loadingTeams">Caricamento team...</div>
+      <div class="alert error" *ngIf="teamsErr">{{ teamsErr }}</div>
+
+      <div class="muted" *ngIf="!loadingTeams && registeredTeams.length === 0">
+        Nessun team iscritto (ancora).
+      </div>
+
+      <div class="list" *ngIf="registeredTeams.length > 0">
+        <div class="item" *ngFor="let t of registeredTeams">
+          <div class="left">
+            <div class="name">{{ teamLabel(t) }}</div>
+          </div>
+          <div class="id">ID: {{ t.id }}</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <h3 class="subtitle">Regolamento</h3>
+      <p class="muted prewrap">{{ hackathon.regolamento || 'Nessun regolamento.' }}</p>
+    </div>
+
+    <!-- Actions -->
+    <div class="card">
+      <h3 class="subtitle">Azioni</h3>
+
+      <div class="row">
+        <button class="btn" (click)="joinHackathon()" [disabled]="loadingAction">
+          Iscrivi il mio team
+        </button>
+      </div>
+
+      <div class="divider"></div>
+
+      <h3 class="subtitle">Azioni Organizzatore</h3>
+      <div class="row">
+        <button class="btn" (click)="nextPhase()" [disabled]="loadingAction">Next Phase</button>
+        <button class="btn" (click)="payPrize()" [disabled]="loadingAction">Pay Prize</button>
+      </div>
+
+      <div class="divider"></div>
+
+      <h3 class="subtitle">Proclaim Winner</h3>
+      <div class="row">
+        <input class="input" type="number" min="1" [(ngModel)]="winningTeamId" placeholder="Winning Team ID">
+        <button class="btn" (click)="proclaimWinner()" [disabled]="loadingAction">Proclama</button>
+      </div>
+
+      <div class="alert ok" *ngIf="actionMsg">{{ actionMsg }}</div>
+      <div class="alert error" *ngIf="actionErr">{{ actionErr }}</div>
+    </div>
+
+  </section>
+</div>

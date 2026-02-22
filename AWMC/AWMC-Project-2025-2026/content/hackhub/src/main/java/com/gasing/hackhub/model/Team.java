@@ -23,6 +23,9 @@ public class Team {
     @Column(nullable = false)
     private String nome;
 
+    @Column(nullable = false)
+    private boolean isDisqualified = false;
+
     @OneToMany(mappedBy = "team") // cerca la variabile 'team' dentro la classe User.
     @ToString.Exclude  // serve per non far dare errore nei log o debugger
     @JsonIgnore // non serve se usiamo i DTO ma lascio per sicurezza

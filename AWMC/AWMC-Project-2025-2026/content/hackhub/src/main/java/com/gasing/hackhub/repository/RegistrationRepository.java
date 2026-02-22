@@ -15,8 +15,9 @@ public interface RegistrationRepository extends JpaRepository<HackathonRegistrat
     // Controlla se esiste già una registrazione per questa coppia Team-Hackathon
     boolean existsByHackathonAndTeam(Hackathon hackathon, Team team);
 
-    List<HackathonRegistration> findByHackathon(Hackathon hackathon);
-
     // Ci serve per recuperare la registrazione specifica
     Optional<HackathonRegistration> findByHackathonAndTeam(Hackathon hackathon, Team team);
+
+    //tutte le registrazioni di un hackathon
+    List<HackathonRegistration> findByHackathon_Id(Long hackathonId);
 }

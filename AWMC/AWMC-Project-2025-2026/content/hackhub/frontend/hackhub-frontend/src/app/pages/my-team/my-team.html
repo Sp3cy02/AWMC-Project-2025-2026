@@ -1,0 +1,91 @@
+<div class="page">
+  <header class="topbar">
+    <div class="brand" (click)="goHome()">HackHub</div>
+    <div class="actions">
+      <button class="btn ghost" (click)="goHome()">← Home</button>
+      <button class="btn ghost" (click)="goInviti()">Inviti</button>
+    </div>
+  </header>
+
+  <div class="grid">
+
+    <!-- CARD TEAM -->
+    <div class="card">
+      <h2 class="title">Il mio Team</h2>
+
+      <div class="kv">
+        <div><span class="k">User ID</span><span class="v">{{ userId }}</span></div>
+        <div><span class="k">Team ID salvato</span><span class="v">{{ teamId ?? '—' }}</span></div>
+      </div>
+
+      <div class="divider"></div>
+
+      <form (ngSubmit)="create()" class="form">
+        <label class="field">
+          <span>Crea un team</span>
+          <input class="input" [(ngModel)]="nomeTeam" name="nomeTeam" placeholder="Es: I Distruttori" required />
+        </label>
+
+        <div class="row">
+          <button class="btn" type="submit" [disabled]="loadingCreate">
+            {{ loadingCreate ? 'Creazione...' : 'Crea team' }}
+          </button>
+
+          <button class="btn ghost" type="button" (click)="resetTeamLocal()" [disabled]="loadingCreate || loadingMembers || loadingInvite">
+            Cambia team (reset locale)
+          </button>
+
+          <button class="btn ghost" type="button" (click)="loadMembers()" [disabled]="loadingMembers || !teamId">
+            {{ loadingMembers ? 'Carico...' : 'Carica membri' }}
+          </button>
+        </div>
+      </form>
+
+      <div class="alert ok" *ngIf="msg">{{ msg }}</div>
+      <div class="alert error" *ngIf="error">{{ error }}</div>
+
+      <div class="divider"></div>
+
+      <h3 class="subtitle">Invita un membro</h3>
+      <p class="muted">Backend: <code>/api/teams/invite</code></p>
+
+      <div class="row">
+        <input class="input" [(ngModel)]="inviteEmail" name="inviteEmail" placeholder="Email utente da invitare" />
+        <button class="btn" type="button" (click)="invite()" [disabled]="!teamId || loadingInvite">
+          {{ loadingInvite ? 'Invio...' : 'Invita' }}
+        </button>
+      </div>
+
+      <div class="alert ok" *ngIf="inviteMsg">{{ inviteMsg }}</div>
+      <div class="alert error" *ngIf="inviteErr">{{ inviteErr }}</div>
+    </div>
+
+    <!-- CARD MEMBRI -->
+    <div class="card">
+      <h3 class="subtitle">Membri del team</h3>
+      <p class="muted">Backend: <code>/api/teams/:teamId/members</code></p>
+
+      <div class="muted" *ngIf="!teamId">
+        Nessun team selezionato. Crea un team oppure imposta un Team ID.
+      </div>
+
+      <div class="muted" *ngIf="teamId && !loadingMembers && members.length === 0 && !membersErr">
+        Nessun membro trovato (o non hai ancora caricato).
+      </div>
+
+      <div class="muted" *ngIf="loadingMembers">Caricamento membri...</div>
+      <div class="alert error" *ngIf="membersErr">{{ membersErr }}</div>
+
+      <div class="list" *ngIf="members.length > 0">
+        <div class="item" *ngFor="let m of members">
+          <div class="left">
+            <div class="name">{{ m.nome }} {{ m.cognome }}</div>
+            <div class="email">{{ m.email }}</div>
+          </div>
+          <div class="id">ID: {{ m.id }}</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

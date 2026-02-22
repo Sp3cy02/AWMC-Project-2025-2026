@@ -1,0 +1,129 @@
+### ===================================================================
+### TEST STAFF CONTROLLER (VERSIONE CORRETTA)
+### ===================================================================
+
+### 1. SETUP UTENTI
+### ---------------------------------------------------
+
+### 1.1 Nick Fury (Organizzatore) - ID: 1
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{ "nome": "Nick", "cognome": "Fury", "email": "nick@shield.com", "password": "123" }
+
+###
+
+### 1.2 Bruce Banner (Mentore INIZIALE) - ID: 2
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{ "nome": "Bruce", "cognome": "Banner", "email": "bruce@hulk.com", "password": "123" }
+
+###
+
+### 1.3 Carol Danvers (Giudice INIZIALE) - ID: 3
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{ "nome": "Carol", "cognome": "Danvers", "email": "carol@marvel.com", "password": "123" }
+
+###
+
+### 1.4 Natasha Romanoff (NUOVO Mentore da aggiungere dopo) - ID: 4
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{ "nome": "Natasha", "cognome": "Romanoff", "email": "nat@widow.com", "password": "123" }
+
+###
+
+### 1.5 Steve Rogers (NUOVO Giudice da aggiungere dopo) - ID: 5
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{ "nome": "Steve", "cognome": "Rogers", "email": "cap@america.com", "password": "123" }
+
+###
+
+### 1.6 Loki (Intruso) - ID: 6
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{ "nome": "Loki", "cognome": "Laufeyson", "email": "loki@evil.com", "password": "123" }
+
+###
+
+### 2. CREAZIONE HACKATHON
+### ---------------------------------------------------
+### Nick crea l'evento con Bruce (Mentore) e Carol (Giudice)
+POST http://localhost:8080/api/hackathons/create
+Content-Type: application/json
+
+{
+  "organizerId": 1,
+  "judgeId": 3,
+  "mentorIds": [2],
+  "nome": "Avengers Initiative",
+  "regolamento": "Assemble.",
+  "luogo": "Helicarrier",
+  "premio": 0.0,
+  "dimensioneMassimaTeam": 6,
+  "dataInizio": "2026-06-01T09:00:00",
+  "dataFine": "2026-06-02T18:00:00",
+  "scadenzaIscrizione": "2026-05-31T23:59:00"
+}
+
+###
+
+### 3. TEST AGGIUNTA STAFF (DINAMICA)
+### ---------------------------------------------------
+
+### 3.1 TEST SUCCESSO: Aggiunta Secondo Mentore
+### Nick aggiunge Natasha (che non c'era prima)
+POST http://localhost:8080/api/staff/add
+Content-Type: application/json
+
+{
+  "hackathonId": 1,
+  "organizerId": 1,
+  "emailUtente": "nat@widow.com",
+  "ruolo": "MENTOR"
+}
+### ATTESO: 200 OK
+
+###
+
+### 3.2 TEST SUCCESSO: Cambio/Aggiunta Giudice
+### Nick aggiunge Steve come Giudice (il sistema permette più giudici o sostituzioni a seconda della logica, qui aggiunge ruolo)
+POST http://localhost:8080/api/staff/add
+Content-Type: application/json
+
+{
+  "hackathonId": 1,
+  "organizerId": 1,
+  "emailUtente": "cap@america.com",
+  "ruolo": "JUDGE"
+}
+### ATTESO: 200 OK
+
+###
+
+### 3.3 TEST FALLIMENTO: Intruso
+### Loki prova ad aggiungere qualcuno
+POST http://localhost:8080/api/staff/add
+Content-Type: application/json
+
+{
+  "hackathonId": 1,
+  "organizerId": 6,
+  "emailUtente": "loki@evil.com",
+  "ruolo": "MENTOR"
+}
+### ATTESO: 400 Bad Request ("Solo l'Organizzatore...")
+
+###
+
+### 4. VERIFICA FINALE
+### ---------------------------------------------------
+### Dovremmo vedere: Nick, Bruce, Carol, Natasha, Steve.
+GET http://localhost:8080/api/staff/hackathon/1

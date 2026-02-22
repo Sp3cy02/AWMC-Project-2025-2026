@@ -1,10 +1,12 @@
 package com.gasing.hackhub.service;
 
 import com.gasing.hackhub.dto.competizione.TeamContext;
+import com.gasing.hackhub.enums.Role;
 import com.gasing.hackhub.model.Hackathon;
 import com.gasing.hackhub.model.Team;
 import com.gasing.hackhub.model.User;
 import com.gasing.hackhub.repository.HackathonRepository;
+import com.gasing.hackhub.repository.StaffAssignmentRepository;
 import com.gasing.hackhub.repository.TeamRepository;
 import com.gasing.hackhub.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,4 +45,26 @@ public class ValidatorService {
         // Restituisco tutto il pacchetto pronto all'uso
         return new TeamContext(hackathon, team, user);
     }
+
+    public void requireStaffMembership(Long hackathonId, Long userId) {
+    boolean isStaff = staffAssignmentRepository.existsByHackathonIdAndUserId(hackathonId, userId);
+    if (!isStaff) {
+        throw new RuntimeException("Operazione non consentita: non fai parte dello staff di questo hackathon");
+    }
+}
+
+
+    @Autowired
+    private StaffAssignmentRepository staffAssignmentRepository;
+
+    public void requireStaffRole(Long hackathonId, Long userId, Role role) {
+    boolean hasRole = staffAssignmentRepository
+            .existsByHackathonIdAndUserIdAndRole(hackathonId, userId, role);
+
+    if (!hasRole) {
+        throw new RuntimeException("Operazione non consentita: ruolo richiesto " + role);
+    }
+}
+
+
 }

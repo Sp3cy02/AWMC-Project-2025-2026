@@ -15,30 +15,31 @@ import lombok.ToString;
 @AllArgsConstructor
 public class SupportRequest {
 
-   @Id
-   @GeneratedValue(strategy = GenerationType.IDENTITY)
-   private long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-   @Column(nullable = false, length = 1000)
-   private String problema;  // descrizione del problema che il team sta affrontando
+    @Column(nullable = false, length = 1000)
+    private String problema;  // Descrizione del problema
 
-   @Column // il link viene inserito dopo quindi può essere null
-   private String callLink;  // link alla videochiamata per il supporto
+    @Column // Il link viene inserito dopo dal mentore, quindi può essere null all'inizio
+    private String callLink;  // Link alla videochiamata (Google Meet/Zoom)
 
-   @Enumerated(EnumType.STRING)
-   @Column(nullable = false)
-   private RequestStatus status = RequestStatus.OPEN; // Impostiamo un default, es. PENDING o OPEN
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private RequestStatus status = RequestStatus.OPEN;
 
-   @ManyToOne(optional = false) // Una richiesta deve per forza avere un team
-   @JoinColumn(name = "team_id", nullable = false) // crea una colonna team_id nella tabella SupportRequest
-   @ToString.Exclude  // protegge debugger e log errori
-   @JsonIgnore // non serve se usiamo i DTO, però lo lascio per sicurezza nei test
-   private Team team;  // il team che ha fatto la richiesta
+    // Relazioni
 
-   @ManyToOne // le richieste si riferiscono ad un mentore che è opzionale all'inizio
-   @JoinColumn(name = "mentor_id", nullable = true) // crea una colonna staffAssignment_id nella tabella Utente
-   @ToString.Exclude  // protegge debugger e log errori
-   @JsonIgnore // non serve se usiamo i DTO, però lo lascio per sicurezza nei test
-   private StaffAssignment mentor;  // il mentore assegnato alla richiesta
+    @ManyToOne(optional = false) // Una richiesta deve per forza appartenere a un team
+    @JoinColumn(name = "team_id", nullable = false)
+    @ToString.Exclude
+    @JsonIgnore
+    private Team team;
 
+    @ManyToOne // Il mentore è opzionale all'inizio (chiunque può prenderla in carico)
+    @JoinColumn(name = "mentor_id") // Colleghiamo allo StaffAssignment (non all'utente diretto)
+    @ToString.Exclude
+    @JsonIgnore
+    private StaffAssignment mentor;
 }

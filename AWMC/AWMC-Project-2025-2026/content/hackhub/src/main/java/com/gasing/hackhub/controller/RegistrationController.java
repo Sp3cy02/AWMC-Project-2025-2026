@@ -13,15 +13,23 @@ public class RegistrationController {
     @Autowired
     private HackathonService hackathonService;
 
-    // ISCRIVI UN TEAM A UN HACKATHON
+    // Iscrivere il team a un hackathon
     @PostMapping("/join")
     public ResponseEntity<?> joinHackathon(@RequestBody JoinHackathonRequest request) {
         try {
             hackathonService.registerTeam(request);
-
-            return ResponseEntity.ok("Iscrizione effettuata con successo! Buona fortuna 🍀");
+            return ResponseEntity.ok("Iscrizione effettuata con successo! Buona fortuna!");
         } catch (RuntimeException e) {
-            // Se qualcosa va storto (es. Team già iscritto, Hackathon scaduto)
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    //Leggere i team iscritti a un hackathon (NO RegistrationService)
+    @GetMapping("/hackathon/{hackathonId}/teams")
+    public ResponseEntity<?> getTeamsByHackathon(@PathVariable Long hackathonId) {
+        try {
+            return ResponseEntity.ok(hackathonService.getRegisteredTeams(hackathonId));
+        } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }

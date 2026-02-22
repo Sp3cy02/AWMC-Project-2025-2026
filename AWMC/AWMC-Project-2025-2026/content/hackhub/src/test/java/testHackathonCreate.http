@@ -1,0 +1,130 @@
+### ===================================================================
+### CASO D'USO 2: ORGANIZZAZIONE HACKATHON
+### ===================================================================
+
+### 1. SETUP: REGISTRAZIONE STAFF BASE
+### ---------------------------------------------------
+
+### 1.1 Crea Organizzatore (Nick) - ID: 1
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{ "nome": "Nick", "cognome": "Fury", "email": "nick@shield.com", "password": "123" }
+
+###
+
+### 1.2 Crea Giudice (Matt) - ID: 2
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{ "nome": "Matt", "cognome": "Murdock", "email": "matt@law.com", "password": "123" }
+
+###
+
+### 1.3 Crea Mentore 1 (Tony) - ID: 3
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{ "nome": "Tony", "cognome": "Stark", "email": "tony@stark.com", "password": "123" }
+
+###
+
+### 1.4 Crea Mentore 2 (Bruce - da aggiungere dopo) - ID: 4
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{ "nome": "Bruce", "cognome": "Banner", "email": "bruce@hulk.com", "password": "123" }
+
+###
+
+### 2. CREAZIONE HACKATHON
+### ---------------------------------------------------
+
+### 2.1 TEST SUCCESSO: Creazione Hackathon Valido
+# Nick (1) crea l'evento con Matt (2) e Tony (3)
+POST http://localhost:8080/api/hackathons/create
+Content-Type: application/json
+
+{
+  "organizerId": 1,
+  "judgeId": 2,
+  "mentorIds": [3],
+  "nome": "Avengers Initiative 2026",
+  "regolamento": "Chi rompe paga.",
+  "luogo": "Stark Tower",
+  "premio": 1000000.0,
+  "dimensioneMassimaTeam": 6,
+  "dataInizio": "2026-06-01T09:00:00",
+  "dataFine": "2026-06-03T18:00:00",
+  "scadenzaIscrizione": "2026-05-30T23:59:00"
+}
+### ATTESO: 200 OK - Restituisce l'oggetto Hackathon (ID: 1)
+
+###
+
+### 2.2 TEST FALLIMENTO: Nome Duplicato
+# Proviamo a creare un altro evento con lo stesso nome
+POST http://localhost:8080/api/hackathons/create
+Content-Type: application/json
+
+{
+  "organizerId": 1,
+  "judgeId": 2,
+  "mentorIds": [3],
+  "nome": "Avengers Initiative 2026",
+  "regolamento": "Altro regolamento",
+  "luogo": "Altrove",
+  "premio": 50.0,
+  "dimensioneMassimaTeam": 2,
+  "dataInizio": "2027-01-01T00:00:00",
+  "dataFine": "2027-01-02T00:00:00",
+  "scadenzaIscrizione": "2026-12-31T00:00:00"
+}
+### ATTESO: 400 Bad Request - "Esiste già un hackathon con questo nome!"
+
+###
+
+### 2.3 TEST FALLIMENTO: Nessun Mentore
+# Proviamo a creare un evento senza mentori (lista vuota o null)
+POST http://localhost:8080/api/hackathons/create
+Content-Type: application/json
+
+{
+  "organizerId": 1,
+  "judgeId": 2,
+  "mentorIds": [],
+  "nome": "Hackathon Solitario",
+  "regolamento": "Nessun aiuto.",
+  "luogo": "Deserto",
+  "premio": 0.0,
+  "dimensioneMassimaTeam": 1,
+  "dataInizio": "2026-01-01T00:00:00",
+  "dataFine": "2026-01-02T00:00:00",
+  "scadenzaIscrizione": "2025-12-31T00:00:00"
+}
+### ATTESO: 400 Bad Request - "Devi assegnare almeno un Mentore!"
+
+###
+
+### 3. GESTIONE DINAMICA STAFF
+### ---------------------------------------------------
+
+### 3.1 TEST SUCCESSO: Aggiunta Secondo Mentore
+# Nick (1) aggiunge Bruce (4) come mentore all'Hackathon (1)
+POST http://localhost:8080/api/hackathons/1/add-mentor
+Content-Type: application/json
+
+{
+  "organizerId": 1,
+  "hackathonId": 1,
+  "emailUtente": "bruce@hulk.com",
+  "ruolo": "MENTOR"
+}
+### ATTESO: 200 OK - "Nuovo Mentore aggiunto con successo!"
+
+###
+
+### 3.2 VERIFICA: Dettagli Hackathon
+# Mostriamo i dettagli dell'hackathon
+GET http://localhost:8080/api/hackathons/1
+# ATTESO: 200 OK - Nel JSON tornano i dettagli dell'hackathon

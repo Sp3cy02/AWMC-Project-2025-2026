@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/submissions")
 public class SubmissionController {
@@ -27,4 +29,16 @@ public class SubmissionController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @GetMapping("/hackathon/{hackathonId}")
+    public ResponseEntity<?> getSubmissionsByHackathon(@PathVariable Long hackathonId, @RequestParam Long userId) {
+        try {
+            List<Submission> submissions = submissionService.getSubmissionsByHackathon(hackathonId, userId);
+            return ResponseEntity.ok(submissions);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+
 }

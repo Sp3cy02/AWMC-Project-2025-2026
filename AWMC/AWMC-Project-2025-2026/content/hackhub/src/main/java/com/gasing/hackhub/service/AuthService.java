@@ -1,83 +1,61 @@
 package com.gasing.hackhub.service;
 
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-
-import com.gasing.hackhub.config.JwtService;
 import com.gasing.hackhub.dto.auth.request.LoginRequest;
 import com.gasing.hackhub.dto.auth.request.RegisterRequest;
 import com.gasing.hackhub.dto.auth.response.AuthResponse;
 import com.gasing.hackhub.dto.auth.response.UserResponse;
 import com.gasing.hackhub.model.User;
 import com.gasing.hackhub.repository.UserRepository;
+import com.gasing.hackhub.security.JwtService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 
 @Service
 public class AuthService {
 
-    @Autowired
-    private UserRepository userRepository;
-    
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-    
-    @Autowired
-    private JwtService jwtService;
-    
-    @Autowired
-    private AuthenticationManager authenticationManager;
+    @Autowired private UserRepository userRepository;
+    @Autowired private JwtService jwtService;
 
-    // --- 1. REGISTRAZIONE ---
-    // NOTA BENE: Il tipo di ritorno ora è AuthResponse!
-    public AuthResponse register(RegisterRequest request) {
-        
+    // ✅ encoder BCrypt
+    @Autowired private PasswordEncoder passwordEncoder;
+
+    public UserResponse register(RegisterRequest request) {
+
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email già in uso!");
+            throw new RuntimeException("Errore: Email già in uso!");
         }
 
-        User user = new User();
-        user.setNome(request.getNome());
-        user.setCognome(request.getCognome());
-        user.setEmail(request.getEmail());
-        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        User newUser = new User();
+        newUser.setNome(request.getNome());
+        newUser.setCognome(request.getCognome());
+        newUser.setEmail(request.getEmail());
 
-        User savedUser = userRepository.save(user);
+        // ✅ salva HASH BCrypt, non la password in chiaro
+        newUser.setPasswordHash(passwordEncoder.encode(request.getPassword()));
 
-        // Genero il Token e i dati utente
-        String jwtToken = jwtService.generateToken(savedUser);
-        UserResponse userData = mapToUserResponse(savedUser);
-
-        // Restituisco la scatola grande che contiene ENTRAMBI
-        return new AuthResponse(jwtToken, userData);
+        User savedUser = userRepository.save(newUser);
+        return mapToUserResponse(savedUser);
     }
 
-    // --- 2. LOGIN ---
-    // NOTA BENE: Il tipo di ritorno ora è AuthResponse!
     public AuthResponse login(LoginRequest request) {
-        
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
-                        request.getPassword()
-                )
-        );
 
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Utente non trovato"));
+                .orElseThrow(() -> new RuntimeException("Login fallito: Credenziali errate"));
 
-        // Genero il Token e i dati utente
-        String jwtToken = jwtService.generateToken(user);
-        UserResponse userData = mapToUserResponse(user);
+        // confronto corretto BCrypt
+        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+            throw new RuntimeException("Login fallito: Credenziali errate");
+        }
 
-        // Restituisco la scatola grande che contiene ENTRAMBI
-        return new AuthResponse(jwtToken, userData);
+        String token = jwtService.generateToken(user.getEmail());
+
+        AuthResponse res = new AuthResponse();
+        res.setToken(token);
+        res.setUser(mapToUserResponse(user));
+        return res;
     }
 
-    // --- METODO PRIVATO ---
-    // Questo continua a restituire UserResponse, ma viene usato solo qui dentro
     private UserResponse mapToUserResponse(User user) {
         UserResponse response = new UserResponse();
         response.setId(user.getId());
